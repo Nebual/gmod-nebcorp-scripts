@@ -1,0 +1,5 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/turretelevator/turretelevator"
+	"$surfaceprop" "metal"
+}

@@ -1,0 +1,6 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "nclogo/nc"
+	"$surfaceprop" "metal"
+	"$model"     1
+}

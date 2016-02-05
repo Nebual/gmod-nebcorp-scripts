@@ -1,0 +1,164 @@
+TOOL.Category		= "Construction"
+TOOL.Name			= "#Hologrammer"
+TOOL.stage = 0
+/*
+TOOL.ClientConVar[ "addlength" ] = "0"
+TOOL.ClientConVar[ "material" ] = "cable/rope"
+TOOL.ClientConVar[ "width" ] = "2"
+TOOL.ClientConVar[ "rigid" ] = "0"
+TOOL.ClientConVar[ "hasphysics" ] = "1"*/
+if CLIENT then
+	language.Add( "tool.hologrammer.name", "Hologrammer" )
+	language.Add( "tool.hologrammer.desc", "Builds props into a hologram" )
+	language.Add( "tool.hologrammer.0", "Left click the Base Prop that'll have physics" )
+	language.Add( "tool.hologrammer.1", "Selection reset! New base prop selected. Left click the next hologram prop" )
+	language.Add( "tool.hologrammer.2", "Left click the next hologram prop" )
+	language.Add( "tool.hologrammer.3", "Left click the next hologram prop, R to add the shot contraption, Right click to finalize and paste the hologram" )
+	language.Add( "tool.hologrammer.4", "Hologram compiled: Left click to reset, Right click to paste another" )
+end
+
+function TOOL:LeftClick( trace ) 
+	local ret = HoloGrammerLC(self,trace.Entity)
+	if self:GetOwner():KeyDown(IN_WALK) then
+		if CLIENT then 
+			if self.stage == 2 then self:SetStage(3) self.stage = 3 end
+			return true
+		end
+		if !IsValid(trace.Entity) or trace.Entity:IsWorld() then return end
+		for k,v in pairs(constraint.GetAllConstrainedEntities(trace.Entity)) do
+			if v != trace.Entity then HoloGrammerLC(self,v) end
+		end
+	end
+
+end
+function HoloGrammerLC(self,ent)
+	if self.stage == 4 then 
+		if !ent:IsValid() then self:SetStage(0) self.stage = 0
+		else self:SetStage(1) self.stage = 1
+		end
+		if CLIENT then return true end
+		self.List = nil
+		self.compiledHolo = nil
+		self.baseprop = nil
+	end
+	if !ent:IsValid() || ent:IsPlayer() then return end
+	if self.stage < 2 then
+		self:SetStage(2) self.stage = 2
+		if CLIENT then return true end
+		self.List = {}
+		self.baseprop = ent
+	else
+		self:SetStage(3) self.stage = 3
+		if CLIENT then return true end
+		if !table.HasValue(self.List,ent) then table.insert(self.List,ent) end
+	end
+	return true
+end
+
+function TOOL:RightClick( trace ) return HoloGrammerRC(self,trace) end
+function HoloGrammerRC(self,trace)
+	if self.stage && self.stage > 2 then
+		self:SetStage(4) self.stage = 4
+		if CLIENT then return true end
+		if self.compiledHolo or (self.baseprop && self.List && self.List[1]) then
+			if !self.compiledHolo then self.compiledHolo = holoCompile(self.baseprop,self.List) end
+			if self:GetOwner():KeyDown(IN_WALK) then 
+				holoSpawnProps(self.compiledHolo,trace.HitPos,self:GetOwner())
+			else 
+				holoSpawn(self.compiledHolo,trace.HitPos,self:GetOwner())
+			end
+		end
+	end
+end
+function TOOL:Reload( trace ) return HoloGrammerRe(self,trace) end
+function HoloGrammerRe(self,trace)
+	self:SetStage(4) self.stage = 4
+	if CLIENT then return true end
+	self.compiledHolo = trace.Entity.holodata
+end
+//function TOOL:Holster() if SERVER then self.Objects = {} for k=0,self.stage do table.insert(self.Objects,k) end end end
+function TOOL:Deploy() timer.Create("Hologrammerdeploy_"..self:GetOwner():EntIndex(),0.15,9,function() self:SetStage(self.stage) end) end
+function TOOL.BuildCPanel( panel )
+	panel:Help("Your first left click picks a base prop which will have physics")
+	panel:Help("Subsequent left clicks will add additional props as holograms")
+	panel:Help("Alt-leftclick to add an entire contraption")
+	panel:Help("")
+	panel:Help("Right click to paste the current hologram")
+	panel:Help("Alt right click to paste the current holodata as prop_physics")
+	panel:Help("R a base hologram prop to load its holodata into the tool")
+
+	/*panel:AddControl( "Slider", {Label = "#RopeTool_addlength", Description = "RopeTool_addlength_desc", Type = "Float", Min = "-1000",Max="1000",Command="ropedetail_addlength"})
+	panel:AddControl( "Slider", {Label = "#RopeTool_ropewidth", Type = "Float", Min = "0.25",Max="20",Command="ropedetail_width"})
+	panel:AddControl( "RopeMaterial", {Label = "#RopeTool_material", ConVar="ropedetail_material"})
+	panel:AddControl( "CheckBox", { Label = "#RopeTool_rigid", Description = "#RopeTool_rigid_desc", Command = "ropedetail_rigid" }  )*/
+	
+	
+	/*
+	local ctrl = self:TextEntry( data.label or "Untitled", data.command )
+		local ctrl = self:Help( data.text )
+		local ctrl = self:CheckBox( data.label or "Untitled", data.command )
+		if ( data.type && string.lower(data.type) == "float" ) then Decimals = 2 end
+		local ctrl = self:NumSlider( data.label or "Untitled", data.command, data.min or 0, data.max or 100, Decimals )
+		self:Button( name, command, commandarg1, commandarg2 )
+	
+		if ( string.lower(control) == "propselect" ) then
+			local ctrl = vgui.Create( control, self )
+			ctrl:ControlValues( data ) // Yack.
+			self:AddPanel( ctrl )
+		
+		local ctrl = vgui.Create( "MatSelect", self )
+		ctrl:ControlValues( data ) // Yack.
+		self:AddPanel( ctrl )
+		return ctrl
+		
+		local ctrl = vgui.Create( "CtrlColor", self )
+		ctrl:SetConVarR( data.red )
+		ctrl:SetConVarG( data.green )
+		ctrl:SetConVarB( data.blue )
+		ctrl:SetConVarA( data.alpha )
+		self:AddPanel( ctrl )
+		
+		if ( string.lower(control) == "listbox" ) then
+			if ( data.height ) then
+				local ctrl = vgui.Create( "DListView" )
+				ctrl:SetMultiSelect( false )
+				self:AddPanel( ctrl )
+				
+				ctrl:AddColumn( data.label or "unknown" )
+				if ( data.options ) then
+					for k, v in pairs( data.options ) do
+						v.id = nil // Some txt file configs still have an `ID'. But these are redundant now.
+						local line = ctrl:AddLine( k )
+						line.data = v
+						// This is kind of broken because it only checks one convar
+						// instead of all of them. But this is legacy. It will do for now.
+						for k, v in pairs( line.data ) do
+							if ( GetConVarString( k ) == v ) then
+								line:SetSelected( true )
+							end
+						end
+					end
+				end
+				ctrl:SetTall( data.height )
+				ctrl:SortByColumn( 1, false )
+				function ctrl:OnRowSelected( LineID, Line )
+					for k, v in pairs( Line.data ) do
+						RunConsoleCommand( k, v )
+					end
+				end
+			else
+				local ctrl = vgui.Create( "CtrlListBox", self )
+				if ( data.options ) then
+					for k, v in pairs( data.options ) do
+						v.id = nil // Some txt file configs still have an `ID'. But these are redundant now.
+						ctrl:AddOption( k, v )
+					end
+				end
+				self:AddPanel( ctrl )
+			end
+			return ctrl
+		end 
+	*/
+	
+end
+//holoLoad(holoCompile(this,{Entity(16),Entity(17),Entity(18),Entity(31)}),ply:GetPos(),ply)

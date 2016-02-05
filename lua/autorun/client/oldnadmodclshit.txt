@@ -1,0 +1,98 @@
+/*
+local PM = {Lists = {}}
+local function AdjustFocus(bool)
+	PM.Frame:SetKeyBoardInputEnabled(bool) ff
+	PM.Frame:SetMouseInputEnabled(bool)
+	if bool then 
+		PM.Frame:SetVisible( true )
+		PM.TextBox:RequestFocus() 
+	end
+end
+local function AddPM(bool,nick,msg)
+	local listview = PM.Lists[nick]
+	if bool then listview:AddLine("You: ",msg) else listview:AddLine(nick..": ",msg) end
+	if #listview:GetLines() > 17 then listview:RemoveLine(listview.NextLineToRemove) listview.NextLineToRemove = listview.NextLineToRemove + 1 end
+	PM.Frame:SetVisible( true )
+end
+local function InitPMs() 
+	PM.Frame = vgui.Create( "DFrame" )
+	PM.Frame:SetSize( 400,400 )
+	PM.Frame:SetPos(50,300)
+	PM.Frame:SetTitle( "Private Messages" )
+	PM.Frame:MakePopup()
+	PM.Frame:SetDeleteOnClose(false)
+	PM.Frame:SetAlpha(100)
+	//PM.Frame.OnMousePressed = function() AdjustFocus(false) end
+	
+	PM.Sheet = vgui.Create( "DPropertySheet", PM.Frame )
+	PM.Sheet:SetSize(390,340)
+	PM.Sheet:SetPos(5,30)
+	PM.Sheet:SetAlpha(100)
+	
+	PM.TextBox = vgui.Create("DTextEntry", PM.Frame)
+	PM.TextBox:SetSize(365, 20)
+	PM.TextBox:SetPos(5, 375)
+	PM.TextBox:RequestFocus()
+	PM.TextBox.OnEnter = function() 
+		local msg = PM.TextBox:GetValue()
+		AddPM(true,PM.Sheet:GetActiveTab():GetPanel().Nick,msg)
+		RunConsoleCommand("nadmod_pm", PM.Sheet:GetActiveTab():GetPanel().Nick, msg)
+		PM.TextBox:SetText("")
+		PM.TextBox:RequestFocus()
+	end
+	PM.TextBox:SetAlpha(170)
+	PM.CloseButton = vgui.Create("DSysButton",PM.Frame)
+	PM.CloseButton:SetSize(20,20)
+	PM.CloseButton:SetPos(375,375)
+	PM.CloseButton:SetChar("7")
+	PM.CloseButton:SetTooltip("Remove Focus!")
+	PM.CloseButton.DoClick = function() 
+		AdjustFocus(false)
+		if PM.TextBox:GetValue() != "" then PM.TextBox.OnEnter() end 
+	end
+	PM.CloseButton:SetAlpha(200)
+	
+end
+local function NewPM(bool,nick,msg)
+	if !PM.Frame then InitPMs() end
+
+	local DermaListView = vgui.Create("DListView", PM.Sheet)
+	DermaListView:SetPos(10, 35)
+	DermaListView:SetSize(380, 330)
+	DermaListView:SetMultiSelect(false)
+	DermaListView.Nick = nick
+	DermaListView.NextLineToRemove = 1
+	DermaListView:SetAlpha(200)
+
+	local column1 = DermaListView:AddColumn("Name")
+	column1:SetMinWidth( math.Round(string.len(nick)*7.5) + 5 )
+	column1:SetMaxWidth( math.Round(string.len(nick)*7.5) + 5 )
+	
+	DermaListView:AddColumn("Message")
+	
+	if bool then DermaListView:AddLine("You: ",msg) else DermaListView:AddLine(nick..": ",msg) end
+	
+	PM.Lists[nick] = DermaListView
+	PM.Sheet:AddSheet( nick, PM.Lists[nick], "gui/silkicons/user", false, false, "Bonk!" )
+	PM.Sheet:InvalidateLayout()
+	if PM.HasMultipleTabs then timer.Simple(0.15,function() PM.Sheet:SetActiveTab(PM.Lists[nick]) end) end
+	PM.HasMultipleTabs = true
+end
+
+usermessage.Hook("nadmod_pm", function(um) 
+	local bool,nick,msg = um:ReadBool(), um:ReadString(), um:ReadString()
+	if !PM.Lists[nick] then NewPM(bool,nick,msg) 
+	else AddPM(bool,nick,msg)
+	end
+	if !bool then print("[PM] "..nick..": "..msg) end
+end)
+
+hook.Add("GUIMousePressed", "Nadmod_pm",function(enum,vec)
+	if !PM.Frame then return end
+	local x,y = PM.Frame:GetPos()
+	local x2,y2 = PM.Frame:GetSize()
+	x2,y2 = x2 + x, y2 + y
+	if (vec.x > (x/ScrW()) && vec.x < (x2/ScrW())) && (vec.y > (y/ScrH()) && vec.y < (y2/ScrH())) then AdjustFocus(true) end
+end)
+concommand.Add("nadmod_openpm", function(ply,cmd,args) if PM.Frame then AdjustFocus(true) end end)
+*/

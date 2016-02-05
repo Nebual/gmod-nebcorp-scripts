@@ -1,0 +1,636 @@
+"TableToKeyValues"
+{
+	"parentid"		"22"
+	"icon"		"icon16/page.png"
+	"id"		"90"
+	"contents"
+	{
+		"1"
+		{
+			"type"		"model"
+			"model"		"models/props_phx/amraam.mdl"
+		}
+		"2"
+		{
+			"type"		"model"
+			"model"		"models/props_phx/ball.mdl"
+		}
+		"3"
+		{
+			"type"		"model"
+			"model"		"models/props_phx/box_amraam.mdl"
+		}
+		"4"
+		{
+			"type"		"model"
+			"model"		"models/props_phx/box_torpedo.mdl"
+		}
+		"5"
+		{
+			"type"		"model"
+			"model"		"models/props_phx/cannon.mdl"
+		}
+		"6"
+		{
+			"type"		"model"
+			"model"		"models/props_phx/cannonball.mdl"
+		}
+		"7"
+		{
+			"type"		"model"
+			"model"		"models/props_phx/empty_barrel.mdl"
+		}
+		"8"
+		{
+			"type"		"model"
+			"model"		"models/props_phx/mk-82.mdl"
+		}
+		"9"
+		{
+			"type"		"model"
+			"model"		"models/props_phx/oildrum001_explosive.mdl"
+		}
+		"10"
+		{
+			"type"		"model"
+			"model"		"models/props_phx/rocket1.mdl"
+		}
+		"11"
+		{
+			"type"		"model"
+			"model"		"models/props_phx/rt_screen.mdl"
+		}
+		"12"
+		{
+			"type"		"model"
+			"model"		"models/props_phx/sp_screen.mdl"
+		}
+		"13"
+		{
+			"type"		"model"
+			"model"		"models/props_phx/torpedo.mdl"
+		}
+		"14"
+		{
+			"type"		"model"
+			"model"		"models/props_phx/wheelaxis.mdl"
+		}
+		"15"
+		{
+			"type"		"model"
+			"model"		"models/props_phx/ww2bomb.mdl"
+		}
+		"16"
+		{
+			"type"		"model"
+			"model"		"models/props_phx/misc/flakshell_big.mdl"
+		}
+		"17"
+		{
+			"type"		"model"
+			"model"		"models/props_phx/misc/smallcannon.mdl"
+		}
+		"18"
+		{
+			"type"		"model"
+			"model"		"models/props_phx/misc/smallcannonclip.mdl"
+		}
+		"19"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate.mdl"
+		}
+		"20"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate025.mdl"
+		}
+		"21"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate05.mdl"
+		}
+		"22"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate075.mdl"
+		}
+		"23"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate1.mdl"
+		}
+		"24"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate125.mdl"
+		}
+		"25"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate150.mdl"
+		}
+		"26"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate175.mdl"
+		}
+		"27"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate2.mdl"
+		}
+		"28"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate3.mdl"
+		}
+		"29"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate4.mdl"
+		}
+		"30"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate5.mdl"
+		}
+		"31"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate6.mdl"
+		}
+		"32"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate7.mdl"
+		}
+		"33"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate8.mdl"
+		}
+		"34"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate16.mdl"
+		}
+		"35"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate025x025.mdl"
+		}
+		"36"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate025x05.mdl"
+		}
+		"37"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate025x075.mdl"
+		}
+		"38"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate025x1.mdl"
+		}
+		"39"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate025x125.mdl"
+		}
+		"40"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate025x150.mdl"
+		}
+		"41"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate025x175.mdl"
+		}
+		"42"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate025x2.mdl"
+		}
+		"43"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate025x3.mdl"
+		}
+		"44"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate025x4.mdl"
+		}
+		"45"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate025x5.mdl"
+		}
+		"46"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate025x6.mdl"
+		}
+		"47"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate025x7.mdl"
+		}
+		"48"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate025x8.mdl"
+		}
+		"49"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate025x16.mdl"
+		}
+		"50"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate025x24.mdl"
+		}
+		"51"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate025x32.mdl"
+		}
+		"52"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate05x05.mdl"
+		}
+		"53"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate05x075.mdl"
+		}
+		"54"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate05x1.mdl"
+		}
+		"55"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate05x2.mdl"
+		}
+		"56"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate05x3.mdl"
+		}
+		"57"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate05x4.mdl"
+		}
+		"58"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate05x5.mdl"
+		}
+		"59"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate05x6.mdl"
+		}
+		"60"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate05x7.mdl"
+		}
+		"61"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate05x8.mdl"
+		}
+		"62"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate05x16.mdl"
+		}
+		"63"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate05x24.mdl"
+		}
+		"64"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate05x32.mdl"
+		}
+		"65"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate075x075.mdl"
+		}
+		"66"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate075x1.mdl"
+		}
+		"67"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate075x105.mdl"
+		}
+		"68"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate075x2.mdl"
+		}
+		"69"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate075x3.mdl"
+		}
+		"70"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate075x4.mdl"
+		}
+		"71"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate075x5.mdl"
+		}
+		"72"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate075x6.mdl"
+		}
+		"73"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate075x7.mdl"
+		}
+		"74"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate075x8.mdl"
+		}
+		"75"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate075x16.mdl"
+		}
+		"76"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate075x24.mdl"
+		}
+		"77"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate075x32.mdl"
+		}
+		"78"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate1x16.mdl"
+		}
+		"79"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate1x24.mdl"
+		}
+		"80"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate1x32.mdl"
+		}
+		"81"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate2x16.mdl"
+		}
+		"82"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate2x24.mdl"
+		}
+		"83"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate2x32.mdl"
+		}
+		"84"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate3x16.mdl"
+		}
+		"85"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate3x24.mdl"
+		}
+		"86"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate3x32.mdl"
+		}
+		"87"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate4x16.mdl"
+		}
+		"88"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate4x24.mdl"
+		}
+		"89"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate4x32.mdl"
+		}
+		"90"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate5x16.mdl"
+		}
+		"91"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate5x24.mdl"
+		}
+		"92"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate5x32.mdl"
+		}
+		"93"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate6x16.mdl"
+		}
+		"94"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate6x24.mdl"
+		}
+		"95"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate6x32.mdl"
+		}
+		"96"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate7x16.mdl"
+		}
+		"97"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate7x24.mdl"
+		}
+		"98"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate7x32.mdl"
+		}
+		"99"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate8x16.mdl"
+		}
+		"100"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate8x24.mdl"
+		}
+		"101"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate8x32.mdl"
+		}
+		"102"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate16x16.mdl"
+		}
+		"103"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate16x24.mdl"
+		}
+		"104"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate16x32.mdl"
+		}
+		"105"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate24x24.mdl"
+		}
+		"106"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate24x32.mdl"
+		}
+		"107"
+		{
+			"type"		"model"
+			"model"		"models/hunter/plates/plate32x32.mdl"
+		}
+		"108"
+		{
+			"type"		"model"
+			"model"		"models/props_phx/misc/iron_beam1.mdl"
+		}
+		"109"
+		{
+			"type"		"model"
+			"model"		"models/props_phx/misc/iron_beam2.mdl"
+		}
+		"110"
+		{
+			"type"		"model"
+			"model"		"models/props_phx/misc/iron_beam3.mdl"
+		}
+		"111"
+		{
+			"type"		"model"
+			"model"		"models/props_phx/misc/iron_beam4.mdl"
+		}
+		"112"
+		{
+			"type"		"model"
+			"model"		"models/XQM/pistontype1.mdl"
+		}
+		"113"
+		{
+			"type"		"model"
+			"model"		"models/XQM/pistontype1big.mdl"
+		}
+		"114"
+		{
+			"type"		"model"
+			"model"		"models/XQM/pistontype1huge.mdl"
+		}
+		"115"
+		{
+			"type"		"model"
+			"model"		"models/XQM/pistontype1large.mdl"
+		}
+		"116"
+		{
+			"type"		"model"
+			"model"		"models/XQM/pistontype1medium.mdl"
+		}
+		"117"
+		{
+			"type"		"model"
+			"model"		"models/XQM/polex1.mdl"
+		}
+		"118"
+		{
+			"type"		"model"
+			"model"		"models/XQM/polex2.mdl"
+		}
+		"119"
+		{
+			"type"		"model"
+			"model"		"models/XQM/polex3.mdl"
+		}
+		"120"
+		{
+			"type"		"model"
+			"model"		"models/XQM/polex4.mdl"
+		}
+		"121"
+		{
+			"type"		"model"
+			"model"		"models/hunter/triangles/trapezium.mdl"
+		}
+		"122"
+		{
+			"type"		"model"
+			"model"		"models/hunter/triangles/trapezium3x3x1.mdl"
+		}
+		"123"
+		{
+			"type"		"model"
+			"model"		"models/hunter/triangles/trapezium3x3x1a.mdl"
+		}
+		"124"
+		{
+			"type"		"model"
+			"model"		"models/hunter/triangles/trapezium3x3x1b.mdl"
+		}
+		"125"
+		{
+			"type"		"model"
+			"model"		"models/hunter/triangles/trapezium3x3x1c.mdl"
+		}
+	}
+	"name"		"Useful and Explosive"
+	"version"		"3"
+}

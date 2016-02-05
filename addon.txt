@@ -1,0 +1,10 @@
+"AddonInfo"
+{
+	"name"		"Nebcorp First Party Content"
+	"up_date"	"Sept 2nd 2012"
+	"author_name"	"Nebual"
+	"author_email"	"nebual@nebtown.info"
+	"author_url"	"http://nebtown.pbworks.com"
+	
+	"info"		"Contains Nebual's own scripts"
+}

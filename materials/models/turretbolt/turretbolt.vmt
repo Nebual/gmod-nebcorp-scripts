@@ -1,0 +1,7 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/turretbolt/turretbolt"
+	"$surfaceprop" "metal"
+	$alpha 1
+	$selfillum 1
+}
