@@ -19,34 +19,41 @@ Glossery:
 
 
 atmAmount(Entity bill) -- Returns the accurate Nebux value of the specified banknote
-	0: Possible forgery detected
-	N: The banknote's current value
+	0: Bill is worthless, forged, or entity is not a bill.
+	N: The banknote's current value.
 
 atmDeposit(Account, Entity bill) -- Consumes a Nebux bank note, depositing its value
-	0: Possible forgery detected
-	N: The value deposited
+	-1: Invalid Argument. (Account is not a string or Player.)
+	0: Deposit failed, or bill is forged.
+	N: The value deposited.
 
 atmAuthenticate(Account, string pin) -- Attempts to authorize this E2 to make withdrawls
-	0: Authorization declined
-	1: Authorization granted
+	0: Authorization Denied.
+	1: Authorization Granted.
 	2: Creating new account, please ask end user to re-enter their PIN a second time
 
 atmBalance(Account) -- Returns the current bank footprint of the specified account holder
-	-1: Non-authorized account access
+	* Requires Authentication
+	-1: Not Authorized. (Use atmAuthenticate first.)
 	N: Available funds
 
 atmWithdraw(Account, amount, vector position) -- Attempts to withdraw a Nebux bank note
-	0: Non-authorized account access, or non-sufficient funds
-	Entity: The spawned bank note
-	* requires authentication
+	* Requires Authentication
+	-1: Not Authorized (Use atmAuthenticate first,) or Invalid Argument. (Account is not a string or Player.)
+	0: Withdrawal failed, or account has no funds.
+	Entity: The spawned bank note.
 
 Entity:setOverlayText(string text) -- May be used to write comments on bills
 
 */
 
-ATMSalt = ATMSalt or math.random(1111, 99999)
-local SaltDelta = 10^-7
-local SaltDelta2 = 1 - SaltDelta
+Nebbux=Nebbux or {}
+Nebbux.ATM_SALT = Nebbux.ATM_SALT or math.random(1111, 99999)
+Nebbux.SALT_DELTA = 10^-7
+Nebbux.SALT_DELTA2 = 1 - Nebbux.SALT_DELTA
+Nebbux.ACCOUNT_FILE = "nebcorp/atm.txt"
+Nebbux.PIN_FILE = "nebcorp/atm_pins.txt"
+Nebbux.STARTING_BALANCE = 20
 
 registerCallback("construct", function(self)
 	self.data.ATMAuthentications = {}
@@ -55,41 +62,63 @@ registerCallback("destruct", function(self)
 	self.data.ATMAuthentications = nil
 end)
 
-local function closeEnough(value)
-	local diff = value % 1
-	return value != 0 && (diff < SaltDelta || diff > SaltDelta2)
+--################################################## ACCOUNT MANAGEMENT
+function Nebbux.loadAccounts()
+	return util.JSONToTable(file.Read(Nebbux.ACCOUNT_FILE,"DATA") or "{}")
+end
+function Nebbux.saveAccounts(accounts)
+	file.Write(Nebbux.ACCOUNT_FILE, util.TableToJSON(accounts))
+end
+function Nebbux.translateAccountName(account)
+	if(type(account)=="Player") then account=account:SteamID() end
+	if(type(account)=="string") then return account end
+	return nil
+end
+function Nebbux.adjustBalance(account,amount)
+--force: boolean or nil. True bypasses normal protections, which for example can credit accounts into negative values.
+	local account=Nebbux.translateAccountName(account)
+	if(account)
+	then
+		local accounts=Nebbux.loadAccounts()
+		local balance=accounts[account] or Nebbux.STARTING_BALANCE
+		if(not force)
+		then
+			if(-amount>balance) then amount=-balance end
+		end
+		accounts[account]=balance+amount
+		Nebbux.saveAccounts(accounts)
+		return amount
+	end
+	return 0
+end
+function Nebbux.getBalance(account)
+	local account=Nebbux.translateAccountName(account)
+	if(account)
+	then
+		local accounts=Nebbux.loadAccounts()
+		return accounts[account] or Nebbux.STARTING_BALANCE
+	end
+	return -1
 end
 
-local function atmDeposit(account, bill)
+--################################################## BILL MANIPULATION
+function Nebbux.closeEnough(value)
+	local diff = value % 1
+	return value != 0 && (diff < Nebbux.SALT_DELTA || diff > Nebbux.SALT_DELTA2)
+end
+function Nebbux.setBillValue(bill,amount)
+	if not IsValid(bill) then return end
+	bill.bill = amount * (bill:EntIndex() * Nebbux.ATM_SALT)^2
+	bill:SetNetworkedString("WireName", amount .. " Nebux")
+	bill:SetOverlayText("")
+end
+function Nebbux.getBillValue(bill)
 	if not IsValid(bill) or not bill.bill then return 0 end
-	local value = bill.bill / ((ATMSalt * bill:EntIndex())^2)
-	if !closeEnough(value) then return 0 end
-	
-	local accounts = util.JSONToTable(file.Read("nebcorp/atm.txt","DATA") or "{}")
-	accounts[account] = (accounts[account] or 0) + value
-	file.Write("nebcorp/atm.txt", util.TableToJSON(accounts))
-	bill:Remove()
+	local value = bill.bill / ((Nebbux.ATM_SALT * bill:EntIndex())^2)
+	if !Nebbux.closeEnough(value) then return 0 end
 	return value
 end
-
-e2function number atmDeposit(entity ply, entity bill)
-	if not IsValid(ply) or not ply:IsPlayer() then return 0 end
-	return atmDeposit(ply:SteamID(), bill)
-end
-e2function number atmDeposit(string account, entity bill)
-	--if string.find(account, "STEAM_") then return 0 end
-	return atmDeposit(account, bill)
-end
-
-local function atmWithdraw(self, account, amount, pos)
-	if not self.data.ATMAuthentications[account] then return 0 end
-	if amount <= 0 then return 0 end 
-	
-	local accounts = util.JSONToTable(file.Read("nebcorp/atm.txt","DATA") or "{}")
-	if !accounts[account] or accounts[account] < amount then return 0 end
-	accounts[account] = accounts[account] - amount
-	file.Write("nebcorp/atm.txt", util.TableToJSON(accounts))
-
+function Nebbux.createBill(amount,pos)
 	local Data = {
 		Pos		= E2Lib.clampPos(pos),
 		Angle	= Angle(),
@@ -99,8 +128,7 @@ local function atmWithdraw(self, account, amount, pos)
 	if not prop then return end
 	duplicator.DoGeneric( prop, Data )
 	prop.Namage = False
-	prop:SetNetworkedString("WireName", amount .. " Nebux")
-	prop:SetOverlayText("")
+	Nebbux.setBillValue(prop,amount)
 	prop:SetNetworkedString("FounderName", "Gman")
 	prop:CPPISetOwnerless(true)
 	prop:Spawn()
@@ -110,46 +138,55 @@ local function atmWithdraw(self, account, amount, pos)
 	snd:ChangeVolume(0.66, 0)
 	snd:Play()
 	DoPropSpawnedEffect( prop )
-	
-	prop.bill = amount * (prop:EntIndex() * ATMSalt)^2
 	prop:Activate()
 	prop:GetPhysicsObject():Wake()
 	return prop
 end
-
-e2function entity atmWithdraw(entity ply, amount, vector pos)
-	if not IsValid(ply) or not ply:IsPlayer() then return 0 end
-	return atmWithdraw(self, ply:SteamID(), math.floor(amount), Vector(pos[1],pos[2],pos[3]))
-end
-e2function entity atmWithdraw(string account, amount, vector pos)
-	--if string.find(account, "STEAM_") then return 0 end
-	return atmWithdraw(self, account, math.floor(amount), Vector(pos[1],pos[2],pos[3]))
+function Nebbux.destroyBill(bill,fancySFX)
+	bill:Remove()
+	--We'll leave this for now, but I suspect we can put a death animation in here.
 end
 
-e2function number atmValue(entity bill)
+--################################################## WITHDRAWALS AND DEPOSITS
+function Nebbux.deposit(account, bill)
 	if not IsValid(bill) or not bill.bill then return 0 end
-	local value = bill.bill / ((ATMSalt * bill:EntIndex())^2)
-	if !closeEnough(value) then return 0 end
-	return value
-end
-
-local function atmBalance(self, account)
-	if not self.data.ATMAuthentications[account] then return -1 end
 	
-	local accounts = util.JSONToTable(file.Read("nebcorp/atm.txt","DATA") or "{}")
-	return accounts[account] or 0
+	local value = Nebbux.getBillValue(bill)
+	local deposited=Nebbux.adjustBalance(account,value)
+	value=value-deposited
+	
+	if(account==nil or value<=0)
+	then
+		Nebbux.destroyBill(bill)
+	else
+		Nebbux.setBillValue(bill)
+	end
+	return deposited
+end
+function Nebbux.withdraw(account,amount,pos)
+	if amount <= 0 then return 0 end
+	local bill=Nebbux.createBill(0,pos)
+	--We create the bill first because it's more likely to fail. It will be deleted if the withdrawal fails.
+	local withdrawn=-Nebbux.adjustBalance(account,-amount)
+	if(withdrawn<=0)
+	then
+		Nebbux.destroyBill(bill,false)
+	else
+		Nebbux.setBillValue(bill,withdrawn)
+	end
+	return bill,withdrawn
 end
 
-e2function number atmBalance(entity ply)
-	if not IsValid(ply) or not ply:IsPlayer() then return 0 end
-	return atmBalance(self, ply:SteamID())
-end
-e2function number atmBalance(string account)
-	return atmBalance(self, account)
-end
 
-local function atmAuthenticate(self, account, pin)
-	local accounts = util.JSONToTable(file.Read("nebcorp/atm_pins.txt","DATA") or "{}")
+--################################################## EXPRESSION 2 BOILERPLATE
+function Nebbux.getE2Authentication(self,account)
+	account=Nebbux.translateAccountName(account)
+	if(account==nil) then return false end
+	return self.data.ATMAuthentications[account] or false
+end
+function Nebbux.authenticateE2(self,account,pin)
+	account=Nebbux.translateAccountName(account)
+	local accounts = util.JSONToTable(file.Read(Nebbux.PIN_FILE,"DATA") or "{}")
 	if !accounts[account] then
 		if self.data.ATMAuthentications[account] == nil then
 			self.data.ATMAuthentications[account] = false
@@ -170,10 +207,42 @@ local function atmAuthenticate(self, account, pin)
 	return 0
 end
 
-e2function number atmAuthenticate(entity ply, string pin)
-	if not IsValid(ply) or not ply:IsPlayer() then return 0 end
-	return atmAuthenticate(self, ply:SteamID(), pin)
+e2function normal atmValue(entity ent)
+	return Nebbux.getBillValue(ent)
 end
-e2function number atmAuthenticate(string account, string pin)
-	return atmAuthenticate(self, account, pin)
+e2function normal atmBalance(entity ply)
+	if(!IsValid(ply) or !ply:IsPlayer() or !Nebbux.getE2Authentication(self,ply)) then return -1 end
+	return Nebbux.getBalance(ply)
+end
+e2function normal atmBalance(string account)
+	if(!Nebbux.getE2Authentication(self,account)) then return -1 end
+	return Nebbux.getBalance(account)
+end
+
+e2function normal atmAuthenticate(entity ply,string pin)
+	if(!IsValid(ply) or !ply:IsPlayer()) then return -1 end
+	return Nebbux.authenticateE2(self,ply,pin)
+end
+e2function normal atmAuthenticate(string account,string pin)
+	return Nebbux.authenticateE2(self,account,pin)
+end
+
+e2function entity atmWithdraw(entity ply,normal amount,vector pos)
+	if(!IsValid(ply) or !ply:IsPlayer() or !Nebbux.getE2Authentication(self,ply)) then return -1 end
+	local bill,withdrawn=Nebbux.withdraw(ply,amount,Vector(pos[1],pos[2],pos[3]))
+	return bill
+end
+e2function entity atmWithdraw(string account,normal amount,vector pos)
+	if(!IsValid(ply) or !ply:IsPlayer() or !Nebbux.getE2Authentication(self,account)) then return -1 end
+	local bill,withdrawn=Nebbux.withdraw(account,amount,Vector(pos[1],pos[2],pos[3]))
+	return bill
+end
+
+e2function normal atmDeposit(entity ply,entity bill)
+	if(!IsValid(ply) or !ply:IsPlayer() or !IsValid(bill)) then return -1 end
+	return Nebbux.deposit(ply,bill)
+end
+e2function normal atmDeposit(string account,entity bill)
+	if(!IsValid(bill)) then return -1 end
+	return Nebbux.deposit(account,bill)
 end

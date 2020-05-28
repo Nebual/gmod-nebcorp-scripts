@@ -1,7 +1,7 @@
 -- Nebual 2010 (nebual@nebtown.info) presents:
 -- Namage - Nebcorp's Global Damage System
 
-if !Namage then
+if not Namage then
 	-- Namage Init, stuff put in here will only run on map load, not subsequent 'namage_reload'
 	concommand.Add("namage_reload", function() include("autorun/server/namage.lua") end)
 	CreateConVar("namage_on", 1, {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED})
@@ -22,7 +22,7 @@ if !Namage then
 end
 local namage_default = GetConVar("namage_default")
 
-if !Namage.ModifiedSetMaterial then
+if not Namage.ModifiedSetMaterial then
 	Namage.ModifiedSetMaterial = true
 	local meta = FindMetaTable( "Entity" )
 	local OldSetMaterial = meta.SetMaterial
@@ -35,7 +35,7 @@ end
 local round = math.Round
 function Namage.InitProp(ent)
 	-- Note: This is run on every entity ever, even constraints and players
-	if !IsValid(ent) or ent:EntIndex() == 0 or !IsValid(ent:GetPhysicsObject()) or !ent:GetPhysicsObject():GetVolume() or ent:IsNPC() or ent:IsPlayer() or !ent:GetModel() or ent.CDSIgnore or ent:GetClass() == "gmod_ghost" or string.sub(ent:GetClass(), 1, 4) == "func" then return end
+	if not IsValid(ent) or ent:EntIndex() == 0 or not IsValid(ent:GetPhysicsObject()) or not ent:GetPhysicsObject():GetVolume() or ent:IsNPC() or ent:IsPlayer() or not ent:GetModel() or ent.CDSIgnore or ent:GetClass() == "gmod_ghost" or string.sub(ent:GetClass(), 1, 4) == "func" then return end
 	 -- This should filter out most bad things
 	local maxhp = round(ent:GetPhysicsObject():GetVolume()^0.4 * 2.93) -- <3 formula, makes PHX 1x1: 100hp, PHX 4x4: 300hp.
 	ent.Namage = ent.Namage or {
@@ -51,10 +51,10 @@ end
 local function NamageInitPropHooker(ent)
 	if not namage_default:GetBool() then return end
 	local id = "InitNamage_"..ent:EntIndex()
-	timer.Create(id,0.12,1,function() if ent:IsValid() and !ent.Namage then Namage.InitProp(ent) end end)
+	timer.Create(id,0.12,1,function() if ent:IsValid() and not ent.Namage then Namage.InitProp(ent) end end)
 end
 timer.Create("NamageHookOnEntityCreated",10,1, function() hook.Add("OnEntityCreated", "NamageInitProp", NamageInitPropHooker) end)
-// Deciding to make namage opt-in
+-- Deciding to make namage opt-in
 
 -- This should be used to change ents HP, as it updates the clientside display of current health
 function Namage.UpdateProp(ent, hp)
@@ -64,7 +64,7 @@ function Namage.UpdateProp(ent, hp)
 	if id == 0 then return end
 	local imm = ent.Namage.Immune
 	if imm == 1 then hp = hp.."a" elseif imm == 2 then hp = hp .. "b" elseif imm == 3 then hp = hp .. "c" else hp = tostring(hp) end
-	if hp != Namage.Props[id] then
+	if hp ~= Namage.Props[id] then
 		Namage.Props[id] = hp
 		Namage.PropsSmall[id] = hp
 	end
@@ -73,7 +73,7 @@ end
 hook.Add("PlayerInitialSpawn", "NamagePlyInit", function(ply) net.Start("Namage_Props") net.WriteTable(Namage.Props) net.Send(ply) end)
 function Namage.UpdatePlayers()
 	-- Update clientside cache of HP's on a 2.5 second timer. 'next' is the simplist check to see if theres stuff in a table
-	if next(Namage.PropsSmall) then //GetConVarNumber("namage_on") == 1 &&
+	if next(Namage.PropsSmall) then --GetConVarNumber("namage_on") == 1 and
 		net.Start("Namage_Props") 
 			net.WriteTable(Namage.PropsSmall)
 		net.Broadcast()
@@ -83,7 +83,7 @@ end
 timer.Create("Namage_Tick", 2.5, 0, Namage.UpdatePlayers)
 
 function Namage.PlayerHeal(ply,time)
-	if IsValid(ply) && ply:Health() < 100 then ply:SetHealth(ply:Health() + 1) else timer.Destroy("Heal_"..ply:EntIndex()) return end
+	if IsValid(ply) and ply:Health() < 100 then ply:SetHealth(ply:Health() + 1) else timer.Destroy("Heal_"..ply:EntIndex()) return end
 	time = math.max(time / 1.15,0.10)
 	timer.Adjust("Heal_"..ply:EntIndex(),time, 0, function() Namage.PlayerHeal(ply, time) end)
 end
@@ -92,7 +92,7 @@ Namage.Materials = {explosive = "explosive", glass = "glass"}
 Namage.PhysMaterials = {
 	floating_metal_barrel = "explosive",
 	metal = "metal", metal_barrel = "metal", metalpanel = "metal", solidmetal = "metal", porcelain = "metal",
-	//plastic = "plastic", tile = "plastic", plastic_box = "plastic", dirt = "plastic",
+	--plastic = "plastic", tile = "plastic", plastic_box = "plastic", dirt = "plastic",
 	wood = "wood",
 	flesh = "flesh",
 	watermelon = "watermelon"
@@ -103,7 +103,7 @@ function Namage.Material(ent)
 		if string.find(ent:GetModel(), k) then return v end
 	end
 	return Namage.PhysMaterials[ent:GetPhysicsObject():GetMaterial()] -- This will be nil if its plastic or unknown, thats k
-	//return "plastic"
+	--return "plastic"
 end
 
 -- ===================
@@ -112,38 +112,45 @@ end
 local floor = math.floor
 function Namage.Hurt(ent, dmginfo)
 	local inflictor,initamt = dmginfo:GetInflictor(),dmginfo:GetDamage()
-	if ent:IsOnFire() && ent:WaterLevel() > 0 then ent:Extinguish() end -- Best place to throw this; makes water extinguish fire :D
-	if dmginfo:IsDamageType(536870912) then dmginfo:ScaleDamage(3) end
+	if ent:IsOnFire() and ent:WaterLevel() > 0 then ent:Extinguish() end -- Best place to throw this; makes water extinguish fire :D
+	if dmginfo:IsDamageType(DMG_BUCKSHOT) then dmginfo:ScaleDamage(3) end
 	if ent:IsPlayer() then
 		timer.Create("Heal_"..ent:EntIndex(), 10, 3, function() Namage.PlayerHeal(ent, 2) end)
-		if dmginfo:GetDamageType() != 0 && dmginfo:GetDamageType() != 32 && dmginfo:GetDamageType() != 8 then dmginfo:ScaleDamage(GetConVarNumber("namage_plyscale")) end
-		if dmginfo:GetDamageType() == 2 && GetConVarNumber("namage_physicspain") == 0 then dmginfo:SetDamage(0) end
+		if dmginfo:GetDamageType() ~= 0 and dmginfo:GetDamageType() ~= DMG_FALL and dmginfo:GetDamageType() ~= DMG_BURN then dmginfo:ScaleDamage(GetConVarNumber("namage_plyscale")) end
+		if dmginfo:GetDamageType() == DMG_FALL then
+			dmginfo:ScaleDamage(0.4)
+			if dmginfo:GetDamage() >= ent:Health() and ent:Health() > 5 and math.random() < 0.33 then dmginfo:SetDamage(ent:Health() - 1) end
+		end
+		if dmginfo:GetDamageType() == DMG_CRUSH then
+			dmginfo:ScaleDamage(0.6)
+			if GetConVarNumber("namage_physicspain") == 0 then dmginfo:SetDamage(0) end
+		end
 		if GetConVarNumber("namage_debug") == 1 then print("Namage: "..ent:Nick() .. " ["..ent:EntIndex().."]".." just got hit by "..inflictor:EntIndex().." for "..dmginfo:GetDamage().."["..initamt.."] of type "..dmginfo:GetDamageType()) end
 		return
 	end
 	local tab = ent.Namage
-	if !tab or GetConVarNumber("namage_on") == 0 or tab.Immune == 1 then return end
+	if not tab or GetConVarNumber("namage_on") == 0 or tab.Immune == 1 then return end
 	if tab.ProxyEntity then dmginfo:SetDamage(tab.ShieldEntity:ReduceDamage(dmginfo:GetDamage())) end
-	//if math.floor(dmginfo:GetDamageType() / 268435456) == 1 then -- Its fire damage
+	--if math.floor(dmginfo:GetDamageType() / 268435456) == 1 then -- Its fire damage
 	local mat = tab.Type -- This info is also metaupdated when material is changed ;D
 	if mat == "metal" then
 		dmginfo:ScaleDamage(0.5)
-		//if dmginfo:IsDamageType(268435456) then dmginfo:ScaleDamage(0.5) end
+		--if dmginfo:IsDamageType(268435456) then dmginfo:ScaleDamage(0.5) end
 		if dmginfo:IsDamageType(2) or dmginfo:IsDamageType(8) or dmginfo:IsDamageType(268435456) then dmginfo:ScaleDamage(0.66) end
 		if dmginfo:IsDamageType(8) or dmginfo:IsDamageType(64) or dmginfo:IsDamageType(268435456) then ent:Extinguish() end
 	elseif mat == "wood" then
 		dmginfo:ScaleDamage(1.75)
 	end
 	if GetConVarNumber("namage_fire") == 1 and dmginfo:IsDamageType(8) or dmginfo:IsDamageType(64) or dmginfo:IsDamageType(268435456) then Namage.Nire(ent,dmginfo:GetDamage() or 0,tab) end
-	if dmginfo:GetDamageType() == 1 && inflictor:IsPlayer() then dmginfo:SetDamage(0) end
+	if dmginfo:GetDamageType() == 1 and inflictor:IsPlayer() then dmginfo:SetDamage(0) end
 
 
 	local hp = tab.HP - dmginfo:GetDamage()
 	ent:TakePhysicsDamage(dmginfo)
-	if (hp / tab.MaxHP) < 0.15 && ent:GetPhysicsObject():IsValid() then ent:GetPhysicsObject():EnableMotion(true) ent:GetPhysicsObject():Wake() end
+	if (hp / tab.MaxHP) < 0.15 and ent:GetPhysicsObject():IsValid() then ent:GetPhysicsObject():EnableMotion(true) ent:GetPhysicsObject():Wake() end
 	if hp <= 0  then
 		Namage.UpdateProp(ent, 0)
-		if tab.Immune != 2 then Namage.Kill(ent) end
+		if tab.Immune ~= 2 then Namage.Kill(ent) end
 	else Namage.UpdateProp(ent, hp)
 	end
 	if GetConVarNumber("namage_debug") == 1 then print("Namage: "..string.sub(table.remove(string.Explode("/", ent:GetModel() or "No model!")), 1,-5) .. " ["..ent:EntIndex().."]".." just got hit by "..inflictor:EntIndex().." for "..dmginfo:GetDamage().."["..initamt.."] of type "..dmginfo:GetDamageType()) end
@@ -154,16 +161,16 @@ hook.Add("EntityTakeDamage", "Namage", Namage.Hurt)
 function Namage.Nire(ent,dmg,tab)
 	if tab.FireHP > dmg then tab.FireHP = tab.FireHP - dmg 
 	else
-		if !ent:IsOnFire() then
+		if not ent:IsOnFire() then
 			ent:Ignite(tab.MaxHP,0)
 		else
-			timer.Create("Namage_Fire_"..ent:EntIndex(),1,0,function() Namage.Nire2(ent,ent:EntIndex()) end)
+			timer.Create("Namage_Fire_"..ent:EntIndex(),0.33,0,function() Namage.Nire2(ent,ent:EntIndex()) end)
 		end
 		tab.FireHP = tab.MaxHP / 8
 	end
 end
 function Namage.Nire2(ent,id)
-	if !IsValid(ent) or !ent:IsOnFire() then timer.Destroy("Namage_Fire_"..id) return end
+	if not IsValid(ent) or not ent:IsOnFire() then timer.Destroy("Namage_Fire_"..id) return end
 	local vec,rad = ent:LocalToWorld(ent:OBBCenter()), ent:BoundingRadius()*2.1
 	for k,v in pairs(ents.FindInSphere(vec,rad)) do
 		if v.Namage then
@@ -180,7 +187,12 @@ function Namage.Kill(ent)
 	if ent.Namage.Immune == 3 then
 		ent.Namage.Immune = 1
 		ent.Namage.Ghosted = 1
-		ent:SetNotSolid(true)
+		-- ent:SetNotSolid(true)
+		ent.Namage.OldCollisions = ent:GetCollisionGroup()
+		ent:SetCollisionGroup( COLLISION_GROUP_WEAPON )
+		if IsValid(ent:GetPhysicsObject()) then
+			ent:GetPhysicsObject():EnableCollisions(false)
+		end
 		ent.Namage.Color = ent:GetColor()
 		ent:SetColor(Color(255, 155, 155, 100))
 		return -- End!
@@ -215,11 +227,11 @@ function Namage.Kill(ent)
 				timer.Destroy("Namage.RagGibVel_"..timerid)
 			end
 		end)
-		if IsValid(spirit) && !spirit:Alive() then 
+		if IsValid(spirit) and not spirit:Alive() then
 			spirit.DeathRagdoll = Gibs[1]
 			spirit:Spectate( OBS_MODE_CHASE ) 
 			spirit:SpectateEntity(Gibs[1])
-			Gibs[1]:CallOnRemove("unspirit",function(_,ply) if ply:IsValid() and !ply:Alive() then ply:Spectate(OBS_MODE_FIXED) end end,spirit)
+			Gibs[1]:CallOnRemove("unspirit",function(_,ply) if ply:IsValid() and not ply:Alive() then ply:Spectate(OBS_MODE_FIXED) end end,spirit)
 		end
 		flavor,instakill = "Flesh", true
 	elseif ent:GetClass() == "gmod_wire_expression2" then
@@ -228,7 +240,7 @@ function Namage.Kill(ent)
 		ent:PCallHook('destruct')
 		ent.error = 1
 		timer.Create("RemoveE2_"..ent:EntIndex(),30,1,function()
-			if IsValid(ent) && tobool(ent.error) then ent:Remove() end
+			if IsValid(ent) and tobool(ent.error) then ent:Remove() end
 		end)
 		return
 	elseif ent.Namage.Type == "wood" then
@@ -237,7 +249,7 @@ function Namage.Kill(ent)
 		elseif ent:GetModel() == "models/props_phx/construct/wood/wood_panel2x2.mdl" then offsets,model = {-19.75, -11.9,-4.05,3.8,11.65,19.5,27.35,35.2,43.05,50.9,58.75,66.6},"models/props_phx/construct/wood/wood_boardx2.mdl"
 		elseif ent:GetModel() == "models/props_phx/construct/wood/wood_panel1x2.mdl" then offsets,model = {-19.75, -11.9,-4.05,3.8,11.65,19.5,27.35,35.2,43.05,50.9,58.75,66.6},"models/props_phx/construct/wood/wood_boardx1.mdl"
 		end
-		if offsets && !ent:IsOnFire() then
+		if offsets and not ent:IsOnFire() then
 			undo.Create("WoodDivide")
 			undo.SetPlayer( ply )
 			
@@ -249,15 +261,15 @@ function Namage.Kill(ent)
 				part:SetModel(model)
 				part:SetPos(ent:LocalToWorld(Vector(0,y,0)))
 				part:SetAngles(ent:GetAngles())
-				//part:SetOwner(E2Lib.getOwner({},ent))
+				--part:SetOwner(E2Lib.getOwner({},ent))
 				part:Spawn()
 				part:Activate()
 				gamemode.Call("PlayerSpawnedProp",owner, model, part)
 				owner:AddCleanup( "props", part )
-				if !ent:GetPhysicsObject():IsMoveable() then part:GetPhysicsObject():EnableMotion(false) end
-				if ent:GetMaterial() != "" then part:SetMaterial(ent:GetMaterial()) end
+				if not ent:GetPhysicsObject():IsMoveable() then part:GetPhysicsObject():EnableMotion(false) end
+				if ent:GetMaterial() ~= "" then part:SetMaterial(ent:GetMaterial()) end
 				part:SetColor(col)
-				//cleanup.Add(E2Lib.getOwner({},ent)
+				--cleanup.Add(E2Lib.getOwner({},ent)
 				undo.AddEntity( part )
 				for k,v in pairs(oldparts) do
 					if v.Ent1 == ent then v = v.Ent2 else v = v.Ent1 end
@@ -303,7 +315,7 @@ end
 hook.Add("EntityRemoved", "NamageRemoveProp", Namage.RemoveProp)
 
 local function addSounds(kind, path, number)
-	if !Namage.GibSounds[kind] then Namage.GibSounds[kind] = {} end
+	if not Namage.GibSounds[kind] then Namage.GibSounds[kind] = {} end
 	if(number) then
 		for k=1, number do table.insert(Namage.GibSounds[kind], path..k..".wav") end
 	else

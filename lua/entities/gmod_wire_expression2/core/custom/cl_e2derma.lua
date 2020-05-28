@@ -481,4 +481,4 @@ end)
 
 
 CreateClientConVar("e2_dHW_", "0", false, true )
-LocalPlayer():ConCommand( "e2_dHW_" .. " " .. surface.ScreenHeight( ) .. "," .. surface.ScreenWidth( ) )
+RunConsoleCommand( "e2_dHW_", surface.ScreenHeight( ) .. "," .. surface.ScreenWidth( ) )

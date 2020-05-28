@@ -16,6 +16,9 @@ hook.Add( "InitPostEntity", "NebcorpInit", function()
 	NADMOD.Weapons.Hands = "nebcorp_hands"
 end )
 
+CreateConVar( "test_server_var", "3", FCVAR_REPLICATED )
+CreateConVar( "test_shared_var", "5", FCVAR_REPLICATED )
+
 resource.AddWorkshop("182803531") // SBEP
 resource.AddWorkshop("160250458") // Wiremod
 resource.AddWorkshop("173482196") // SProps
@@ -230,6 +233,8 @@ function ReloadEnt(class, noclientside)
 		//local f = file.Open(filepath,"r","LUA")
 		//text = f:Read(f:Size())
 		text = file.Read(filepath, "LUA")
+		text = text:gsub("DEFINE_BASECLAS", "local BaseClass = baseclass.Get")
+		text = text:gsub("local BaseClass = baseclass.GetS", "local BaseClass = baseclass.Get")
 		cltext = text
 	elseif file.Exists("entities/"..class.."/init.lua","LUA") then
 		filepath = "entities/"..class.."/cl_init.lua"
@@ -249,10 +254,16 @@ function ReloadEnt(class, noclientside)
 		base = scripted_ents.Get(class).BaseClass.ClassName
 	end
 
-	RunStringEx("local ENT = scripted_ents.Get(\""..class.."\") or {} "..text.."\nscripted_ents.Register(ENT, \""..class.."\")",filepath)
+	/*if base and file.Exists("entities/"..base..".lua","LUA") then
+		base_text = file.Read("entities/"..base..".lua", "LUA")
+		text = base_text .. " " .. text
+		cltext = base_text .. " " .. cltext
+	end*/
+	
+	RunStringEx("scripted_ents.GetStored(\""..class.."\").t = {} ENT = scripted_ents.Get(\""..class.."\") or {} "..text.."\nscripted_ents.Register(ENT, \""..class.."\")\nbaseclass.Set(\""..class.."\", ENT) ENT = nil",filepath)
 	//RunStringEx("local ENT = scripted_ents.Get(\""..base.."\") or scripted_ents.Get(\""..class.."\") or {} ENT.BaseClass = scripted_ents.Get(\""..base.."\") "..text.."\nscripted_ents.Register(ENT, \""..class.."\")",filepath)
 
-	if !noclientside then CLToast("local ENT = {Base = \""..base.."\"} local function aaa() "..cltext.." end aaa()\nscripted_ents.Register(ENT, \""..class.."\")\nprint('Registered "..class.."')") end
+	if !noclientside then CLToast("ENT = {Base = \""..base.."\"} local function aaa() "..cltext.." end aaa()\nscripted_ents.Register(ENT, \""..class.."\") ENT = nil\nprint('Registered "..class.."')") end
 end
 
 concommand.Add("reloadtool", function(ply,cmd,args) 
@@ -815,7 +826,7 @@ function Nebcorp_Dupe(ent)
 	return Ret
 end
 
-local folder = "e2storeddata/advdupes/MapSaves/"
+local folder = "e2storeddata/advdupes/mapsaves/"
 file.CreateDir(folder,"DATA")
 require"glon"
 function Nebcorp_MapSave()
@@ -835,11 +846,12 @@ function Nebcorp_MapSave()
 			end
 		end
 	end
-	local tab = file.Find(folder .."*.txt","DATA")
+	local tab = file.Find(folder .."*"..game.GetMap().."*.txt","DATA")
 	table.sort(tab)
 	for k=42, #tab do file.Delete(folder .. table.remove(tab, 1)) end
 end
 timer.Create("Nebcorp_MapSave", 120, 0, Nebcorp_MapSave)
+
 
 concommand.Add("debuge2s",function(ply,cmd,args)
 	for k,v in pairs(ents.FindByClass("gmod_wire_expression2")) do print(NADMOD.Props[v:EntIndex()].Name,v,v.name) end
@@ -904,11 +916,34 @@ function WriteTable ( t )
 	f:Close()
 end
 
-jit.off() jit.flush()
+--jit.off() jit.flush()
+hook.Remove( "PlayerTick", "TickWidgets")
 
 timer.Create("PlayX Permission Setup", 0, 1, function()
 	function PlayX.AccessManager(ply)
 		return ply.UserRank and ply.UserRank > 4
 	end
 end)
+
+
+
+-- This hook fixes a bug where entering a vehicle that is parented to you, or to an entity that is parented to you, will crash the server.
+-- Remember to remove this if it's fixed by team garry or in the engine itself
+local nextPrint = {} -- used to prevent message spam
+hook.Add( "CanPlayerEnterVehicle", "check vehicle parented to player", function( ply, veh )
+    local parent = veh:GetParent()
+    while IsValid( parent ) do
+        if parent == ply then
+            if not nextPrint[ply] or nextPrint[ply] < RealTime() then
+                WireLib.AddNotify(ply, "You can't enter this vehicle because it is parented to you.", NOTIFY_ERROR, 7, NOTIFYSOUND_ERROR1 ) -- prettier notification
+                --ply:ChatPrint( "You can't enter this vehicle because it is parented to you." )
+                nextPrint[ply] = RealTime() + 0.3
+            end
+            return false
+        end
+        if parent == veh then return end -- parent loop? this should've crashed the server already but okay
+        parent = parent:GetParent()
+    end
+end )
+
 print("[Nebcorp.lua - Nebtown's Misc Scripts Loaded!]")

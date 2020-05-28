@@ -25,10 +25,10 @@ SWEP.MinDamage = 22
 SWEP.MaxDamage = 44
 SWEP.DrawDelay = 0.6
 
-SWEP.Primary.ClipSize		= 8					// Size of a clip
-SWEP.Primary.DefaultClip	= 32				// Default number of bullets in a clip
+SWEP.Primary.ClipSize		= 8					-- Size of a clip
+SWEP.Primary.DefaultClip	= 32				-- Default number of bullets in a clip
 SWEP.Primary.ShootInWater	= true
-SWEP.Primary.Automatic		= true			// Automatic/Semi Auto
+SWEP.Primary.Automatic		= true			-- Automatic/Semi Auto
 SWEP.Primary.Ammo			= "none"
 SWEP.Primary.Reload 		= false
 
@@ -73,23 +73,23 @@ function Namage.ProcessSwing(self, mode)
 end
 function Namage.ProcessSwing2(self, mode)
 	local ply = self.Owner
-	if !IsValid(ply) then return end
+	if not IsValid(ply) then return end
 	local trace = util.QuickTrace(ply:GetShootPos(),ply:GetAimVector()*80,ply)
 	if not trace.Hit then return end
 	local ent = trace.Entity
 	if trace.HitWorld then 
 		self:GetTextureDecal(trace)
 		self.Owner:EmitSound( self.HitWorld, 100, 100 )
-	elseif ent:IsPlayer() || ent:IsNPC() then
-		util.BlastDamage(self, self.Owner, trace.HitPos, 12, math.random(self.MinDamage, self.MaxDamage) )
+	elseif ent:IsPlayer() or ent:IsNPC() then
+		ent:SetHealth(math.min(ent:GetMaxHealth(), ent:Health() + math.random(self.MinDamage, self.MaxDamage)))
 		self.Owner:EmitSound( table.Random(self.HitFlesh), 100, 100 )
 	elseif ent:IsValid() then
 		self:GetTextureDecal(trace)
 		self.Owner:EmitSound( self.HitWorld, 100, 100 )
 		if mode == 1 then Namage.HealSwing(self,ent)
 		elseif mode == 2 then 
-			if hook.Call("CanTool",GAMEMODE,self.Owner,trace,"ignite") != false then Namage.ImmuneSwing(self,ent) end
-		//elseif mode == 3 then Namage.MenuSwing(self,ent)
+			if hook.Call("CanTool",GAMEMODE,self.Owner,trace,"ignite") ~= false then Namage.ImmuneSwing(self,ent) end
+		--elseif mode == 3 then Namage.MenuSwing(self,ent)
 		end
 	end
 	
@@ -97,7 +97,7 @@ function Namage.ProcessSwing2(self, mode)
 		local aimpos = trace.HitPos or (ply:GetShootPos() + ply:GetAimVector()*70)
 		local found = ents.FindInSphere(aimpos, 10)
 		for k,v in pairs(found) do
-			if v.Namage && v != ent && (v:NearestPoint(aimpos):Distance(aimpos) < 12) then
+			if v.Namage and v ~= ent and (v:NearestPoint(aimpos):Distance(aimpos) < 12) then
 				Namage.HealSwing(self,v)
 			end
 		end
@@ -107,7 +107,7 @@ end
 function Namage.HealSwing(self,ent)
 	ReviveCorpse(self.Owner, ent) -- Incase its a corpse/gib
 	if ent:IsOnFire() then ent:Extinguish() end
-	if ent:GetClass() == "gmod_wire_expression2" && ent.error then ent.error = nil ent:Reset() end
+	if ent:GetClass() == "gmod_wire_expression2" and ent.error then ent.error = nil ent:Reset() end
 	local tab = ent.Namage
 	if tab then 
 		tab.FireHP = tab.MaxHP / 8
@@ -122,7 +122,12 @@ function Namage.HealSwing(self,ent)
 				tab.Immune = 3
 				local c = tab.Color
 				ent:SetColor(c.r,c.g,c.b,c.a)
-				ent:SetNotSolid(false)
+				-- ent:SetNotSolid(false)
+				ent:SetCollisionGroup( ent.Namage.OldCollisions )
+				ent.Namage.OldCollisions = nil
+				if IsValid(ent:GetPhysicsObject()) then
+					ent:GetPhysicsObject():EnableCollisions(true)
+				end
 			else
 				msg = "Starting repairs on "
 				if tab.Ghosted == 2 then msg = "Continuing repairs on " elseif tab.Ghosted == 3 then msg = "Still working on repairing that " end
@@ -134,13 +139,13 @@ function Namage.HealSwing(self,ent)
 end
 
 function Namage.RunDaemon(ent, tab, id)
-	if !IsValid(ent) || !constraint.HasConstraints(ent) then 
-		for k,v in pairs(tab) do if IsValid(v) && v.Namage then v.Namage.Daemon = nil end end
+	if not IsValid(ent) or not constraint.HasConstraints(ent) then
+		for k,v in pairs(tab) do if IsValid(v) and v.Namage then v.Namage.Daemon = nil end end
 		timer.Destroy("NamageDaemon_"..id)
 	else
 		local state = ent.Namage.Immune
 		for k,v in pairs(constraint.GetAllConstrainedEntities(ent)) do 
-			if v.Namage && v.Namage.Immune != state then 
+			if v.Namage and v.Namage.Immune ~= state then
 				v.Namage.Immune = state 
 				Namage.UpdateProp(v) 
 			end 
@@ -149,26 +154,26 @@ function Namage.RunDaemon(ent, tab, id)
 end
 function Namage.ImmuneSwing(self,ent)
 	local state = self.immune
-	if !ent.Namage then Namage.InitProp(ent) state = 4 end
-	if !ent.Namage then return end
+	if not ent.Namage then Namage.InitProp(ent) state = 4 end
+	if not ent.Namage then return end
 	local msg = self.ImmuneMsgs[self.immune]
 	if ent.Namage.Immune == state then state, msg = 4,"Destructable!" end
 	
 	if IsValid(ent.Spirit) then ent.Spirit.DeathRagdoll = nil end
 	
-	if self.Owner:KeyDown( IN_WALK ) && constraint.HasConstraints(ent) then
+	if self.Owner:KeyDown( IN_WALK ) and constraint.HasConstraints(ent) then
 		local tab,count = constraint.GetAllConstrainedEntities(ent),0
 		for _,v in pairs(tab) do
-			if !v.Namage then Namage.InitProp(v) end
+			if not v.Namage then Namage.InitProp(v) end
 			if v.Namage then 
 				v.Namage.Immune = state
 				if v.Namage.Daemon then timer.Destroy("NamageDaemon_"..v:EntIndex()) end
-				if state != 4 then v.Namage.Daemon = ent:EntIndex() else v.Namage.Daemon = nil end
+				if state ~= 4 then v.Namage.Daemon = ent:EntIndex() else v.Namage.Daemon = nil end
 				Namage.UpdateProp(v)
 				count=count+1
 			end
 		end
-		if state != 4 then timer.Create("NamageDaemon_"..ent:EntIndex(), 5, 0, function() Namage.RunDaemon(ent, tab, ent:EntIndex()) end) else timer.Destroy("NamageDaemon_"..ent:EntIndex()) end
+		if state ~= 4 then timer.Create("NamageDaemon_"..ent:EntIndex(), 5, 0, function() Namage.RunDaemon(ent, tab, ent:EntIndex()) end) else timer.Destroy("NamageDaemon_"..ent:EntIndex()) end
 		Namage.Hint(self.Owner,"This contraption of "..count.." entities is now "..msg, 4)
 	else
 		Namage.Hint(self.Owner,"This "..string.sub(table.remove(string.Explode("/", ent:GetModel())), 1,-5) .. "["..ent:EntIndex().."] is now "..msg, 4)
@@ -191,7 +196,7 @@ function SWEP:Think()
 end
 
 function SWEP:PlayIdle()
-	if IsValid(self) && IsValid(self.Owner) && self.Owner:GetActiveWeapon() == self then
+	if IsValid(self) and IsValid(self.Owner) and self.Owner:GetActiveWeapon() == self then
 		self.Weapon:SendWeaponAnim( ACT_VM_IDLE )
 		self.Owner:SetAnimation( PLAYER_ATTACK1 )
 		return true
@@ -209,7 +214,7 @@ function SWEP:TranslateActivity( act )
 		return -1
 	end
 
-	if ( self.ActivityTranslate[ act ] != nil ) then
+	if ( self.ActivityTranslate[ act ] ~= nil ) then
 		return self.ActivityTranslate[ act ]
 	end
 	
@@ -228,8 +233,8 @@ function SWEP:GetTextureDecal(trace)
 	elseif trace.MatType == 87 then
 		texture = "decals/wood/shot" .. math.random(1,5)
 		sound.Play( "physics/wood/wood_solid_impact_bullet" .. math.random(1,5) .. ".wav", trace.HitPos )
-	//elseif trace.MatType == 67 then
-	//	texture = "decals/concrete/tf_shot" .. math.random(1,5)
+	--elseif trace.MatType == 67 then
+	--	texture = "decals/concrete/tf_shot" .. math.random(1,5)
 	elseif trace.MatType == 68 then
 		texture = "decals/dirtshot" .. math.random(1,4)
 	else

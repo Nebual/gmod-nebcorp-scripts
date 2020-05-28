@@ -1,0 +1,12 @@
+{
+	"title"		:	"Nebcorp First Party Content",
+	"type"		:	"tool",
+	"tags"		:	[ "build"],
+	"description":	"Contains Nebual's own scripts",
+	"ignore"	:
+	[
+		"*.txt",
+		".git*",
+		".gitignore"
+	]
+}

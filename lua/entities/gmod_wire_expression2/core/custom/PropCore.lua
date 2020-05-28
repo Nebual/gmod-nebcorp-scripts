@@ -161,6 +161,7 @@ end
 
 //		---------------------------------------------------		USE SUPPORT
 local InUseBy = nil
+local InUseEnt = NULL
  
 /*registerCallback("construct", function(self)
 	self.entity:SetUseType( SIMPLE_USE )
@@ -172,7 +173,9 @@ e2function void hookUse(value)
 		self.entity:SetUseType( SIMPLE_USE )
 		self.entity.Use = function(self,activator)
 			InUseBy = activator
+			InUseEnt = self
 			self:Execute()
+			InUseEnt = NULL
 			InUseBy = nil
 		end
 	else 
@@ -188,6 +191,40 @@ end
 --- Returns 1 if the chip was executed by being used
 e2function number inUse()
 	return InUseBy and 1 or 0
+end
+
+
+-- only works on ents, not prop_physics
+--- Makes the chip "Use"able. Only needs to be called once
+e2function void entity:hookUse(value)
+	if !IsValid(this) then return end
+	if value != 0 then
+		local e2 = self
+		this:SetUseType( SIMPLE_USE )
+		if !this.OldUse then
+			this.OldUse = this.Use
+		end
+		this.Use = function(prop,activator, c, d, e)
+			prop:OldUse(activator, c, d, e)
+			if e2 and IsValid(e2.entity) then
+				InUseBy = activator
+				InUseEnt = prop
+				e2.entity:Execute()
+				InUseEnt = NULL
+				InUseBy = nil
+			end
+		end
+	else
+		if this.OldUse then
+			this.Use = this.OldUse
+		end
+		this.OldUse = nil
+	end
+end
+
+--- Returns the entity being used
+e2function entity inUseEnt()
+	return InUseEnt
 end
 
 /*
@@ -210,7 +247,7 @@ local function MakeClassProp( ply, Class, Pos, Ang, model )
 end
 
 local function createclasspropsfromE2(self,model,class,pos,angles)
-	if not PropCore.ValidSpawn() then return nil end
+	if not PropCore.ValidSpawn(self.player, model, false) then return NULL end
 	class = string.lower(class)
 	if string.Left(class or "", 4) == "info" then WireLib.ClientError("You tried to make an info-class'd entity! This crashes the server!", self.player) return nil end
 	prop = MakeClassProp( self.player, class, pos, angles, model )
@@ -316,7 +353,7 @@ end
 
 
 /* NPC Spawning */
-local function InternalSpawnNPC(variant, pos, ang, customspawnflags )
+local function InternalSpawnNPC(self, variant, pos, ang, customspawnflags )
 	local NPCData = list.Get( "NPC" )[variant]
 	
 	-- Don't let them spawn this entity if it isn't in our NPC Spawn list.
@@ -387,17 +424,35 @@ local function InternalSpawnNPC(variant, pos, ang, customspawnflags )
 	end
 	
 	if ( bDropToFloor && !NPCData.OnCeiling ) then NPC:DropToFloor() end
+
+
+	gamemode.Call("PlayerSpawnedNPC", self.player, NPC)
+	self.player:AddCleanup("npcs", NPC)
+	if self.data.propSpawnUndo then
+		undo.Create("NPC")
+			undo.AddEntity(NPC)
+			undo.SetPlayer(self.player)
+		undo.Finish("NPC (" .. tostring(variant) .. ")")
+	end
+	NPC:CallOnRemove("wire_expression2_propcore_remove", function(NPC)
+		self.data.spawnedProps[ NPC ] = nil
+		E2totalspawnedprops = E2totalspawnedprops - 1
+	end)
+	self.data.spawnedProps[ NPC ] = self.data.propSpawnUndo
+
+	E2totalspawnedprops = E2totalspawnedprops+1
+	E2tempSpawnedProps = E2tempSpawnedProps+1
 	
 	return NPC
 end
 e2function entity npcSpawn(string variant, vector pos)//, angle ang, customspawnflags
-	return InternalSpawnNPC(variant,Vector(pos[1],pos[2],pos[3]))
+	return InternalSpawnNPC(self, variant,Vector(pos[1],pos[2],pos[3]))
 end
 e2function entity npcSpawn(string variant, vector pos, angle ang)
-	return InternalSpawnNPC(variant,Vector(pos[1],pos[2],pos[3]),Angle(ang[1],ang[2],ang[3]))
+	return InternalSpawnNPC(self, variant,Vector(pos[1],pos[2],pos[3]),Angle(ang[1],ang[2],ang[3]))
 end
 e2function entity npcSpawn(string variant, vector pos, angle ang, customspawnflags)
-	return InternalSpawnNPC(variant,Vector(pos[1],pos[2],pos[3]),Angle(ang[1],ang[2],ang[3]), customspawnflags)
+	return InternalSpawnNPC(self, variant,Vector(pos[1],pos[2],pos[3]),Angle(ang[1],ang[2],ang[3]), customspawnflags)
 end
 e2function array npcSpawnables()
 	local ret = {}

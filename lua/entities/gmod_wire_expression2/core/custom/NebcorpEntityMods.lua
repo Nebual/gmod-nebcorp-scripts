@@ -142,6 +142,9 @@ end
 Animation Control Functions
 By: Jeremydeath
 8-21-08
+
+https://developer.valvesoftware.com/wiki/Half-Life_2_Scenes_List
+https://pastebin.com/raw/9J1v8V8d
 *************************************]]
 e2function void entity:sequenceSet(number Sequence)
 	if not IsValid(this) then return end
@@ -474,7 +477,7 @@ e2function void entity:setModelPhysics(string model)
 		constraint.RemoveAll(ent)
 		constraint.ForgetConstraints(ent)
 		ent:SetModel(model)
-		ent:PhysicsInit(6)
+		ent:PhysicsInit(SOLID_VPHYSICS)
 		BuildConstraintsFromTable(ent,tab)
 	end
 end

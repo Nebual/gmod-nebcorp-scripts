@@ -3,8 +3,6 @@ e2function void entity:setDSP(int)
 	this:SetDSP(math.Clamp(int,0,133))
 end
 
-e2function string ircLastSaid() return E2IRCLastSaid or "" end
-e2function string ircLastSpoke() return E2IRCLastSpoke or "" end
 /*
 __e2setcost(100)
 local E2_color_traces = {}

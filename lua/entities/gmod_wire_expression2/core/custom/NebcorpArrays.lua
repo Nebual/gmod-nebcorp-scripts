@@ -165,8 +165,6 @@ end
 
 local fishcolours = {
 	{255,0,0},
-	{0,255,0},
-	{0,0,255},
 	{255,255,0},
 	{0,255,255},
 	{122,122,122},
@@ -174,9 +172,11 @@ local fishcolours = {
 	{122,0,122},
 	{0,122,255},
 	{0,255,122},
+	{0,255,0},
 	{122,255,0},
 	{255,122,0},
 	{255,0,122},
+	{0,0,255},
 	{122,0,255},
 	{122,122,255},
 	{255,122,122},
@@ -221,6 +221,18 @@ e2function void entity:fish()
 		local r,g,b = GetRandomColor()
 		local col = this:GetColor()
 		this:SetColor(Color(r,g,b,col.a))
+	end
+end
+
+--- MAKE <this> FLASH KOOLOURZ
+e2function void entity:fishOrdered()
+	if IsValid(this) then
+		local i = (this.fishi or 0) + 1
+		if i > 20 then i = 1 end
+		this.fishi = i
+		local color = fishcolours[i]
+		local col = this:GetColor()
+		this:SetColor(Color(color[1],color[2],color[3],col.a))
 	end
 end
 

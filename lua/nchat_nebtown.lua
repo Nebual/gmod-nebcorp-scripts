@@ -1,3 +1,8 @@
+NIRC = NChat
+concommand.Add("nirc_reload", function()
+	include("autorun/server/nchat.lua")
+end)
+
 if not NIRC.Emails then
 	NIRC.Emails = util.JSONToTable(file.Read("nebcorp/nirc_emails.txt","DATA") or "{}")
 	NIRC.Notes = util.JSONToTable(file.Read("nebcorp/nirc_notes.txt","DATA") or "{}")
@@ -20,7 +25,7 @@ function NIRC.CheckEmails()
 	for k,v in pairs(NIRC.Emails) do 
 		local tarname = NIRC.FindIRCUser(v[1])
 		if tarname then
-			NIRC.Send(NIRC.botname, "PRIVMSG ".. tarname .. " :"..v[2])
+			NIRC.Say(NIRC.botname, v[2], NULL, tarname)
 			NIRC.Emails[k] = nil
 			NIRC.CheckEmails()
 			file.Write("nebcorp/nirc_emails.txt",util.TableToJSON(NIRC.Emails))
@@ -57,13 +62,13 @@ function NIRC.TransCallback(args,contents,size)
 	local msg = " ("..string.sub(contents, startpos, string.find(contents, "</div>",startpos) - 1) .. ")"
 	msg = string.gsub(msg, "&#39;","'") msg = string.gsub(msg, "&quot;","\"")
 	if args[4] then
-		net.Start("nirc_say")
+		net.Start("nchat_say")
 			net.WriteString(args[1])
 			net.WriteString(msg)
 		net.Send(args[3])
 	else
 		NIRC.Say(args[1], args[2]..msg) // Tell IRC
-		net.Start("nirc_say") // Tell Gmod
+		net.Start("nchat_say") // Tell Gmod
 			net.WriteString(args[1])
 			net.WriteString(msg)
 		net.Broadcast()
@@ -322,19 +327,8 @@ function NIRC.GmanProcess(nick, origmsg, channel)
 		end
 	end
 	local Say,RandSay = NIRC.Say,NIRC.RandSay
-	if string.Left(msg,5) == "fairy" then // Oh gosh it's 2:33 AM Neb
-		local nick = string.lower(nick) // Btw I swear this isn't kris's shenanigans
-		if find(nick, "neb") or find(nick, "kris") then
-			local cmdtab = string.Explode("@",origmsg)
-			table.remove(cmdtab,1)
-			local cmd = cmdtab[1]
-			table.remove(cmdtab,1)
-			local args = cmdtab
-			args = table.concat(args," ")
-			game.ConsoleCommand(cmd.." "..args.."\n")
-			local nick = string.sub(nick,6)
-			NIRC.Send("Gman", "PRIVMSG ".. nick .. " :Okay, I'm running the command \""..cmd.." "..args.."\"!")
-		end
+	if find(msg, "texttospeech") then
+		gmanstfu = false
 	end
 	if gmanstfu then return end
 	if find(msg, "jake") then Say("Lolpants") return end
@@ -343,26 +337,22 @@ function NIRC.GmanProcess(nick, origmsg, channel)
 	if find(msg, "gman") then
 		if channel && string.lower(channel) != NIRC.channel then
 			if string.Left(channel,1) == "#" then
-				Say = function(message) NIRC.Send("Gman", "PRIVMSG "..channel.." :"..message) end
+				Say = function(message) NIRC.Say("Gman", message, NULL, channel) end
 			elseif string.Left(nick,5) == "[IRC]" then
-				Say = function(message) NIRC.Send("Gman", "PRIVMSG "..string.sub(nick,6).." :"..message) end
+				Say = function(message) NIRC.Say("Gman", message, NULL, string.sub(nick,6)) end
 			else
-				Say = function(message) NIRC.Send("Gman", "PRIVMSG "..nick.." :"..message) end
+				Say = function(message) NIRC.Say("Gman", message, NULL, nick) end
 			end
 			RandSay = function(arg1) Say(table.Random(arg1), nil) end
 		end
 		if find(msg, "engtorune") then NIRC.EngToRune(nick, msg, Say) return end
 		if find(msg, "runetoeng") then NIRC.RuneToEng(nick, msg, Say) return end
 		if find(msg, "runehelp") then
-			timer.Simple(400, function() NIRC.Send("Gman", "NICK [GM]Gman") end)
 			Say("To convert English into English Runic say: \"gman engtorune TEXT\". To convert it back say: \"gman runetoeng "..string.char(225)..string.char(155)..string.char(143)..string.char(225)..string.char(155)..string.char(150)..string.char(225)..string.char(155)..string.char(163)..string.char(225)..string.char(155)..string.char(143).."\". Combinations that can be converted into runes are: [ch] [ea] [ei] [eu] [io] [ng] [qu] [sh] [th].")
 			return
 		end
 		if find(msg, "silence") and find(msg, "golden") then
 			gmanstfu = true
-			return
-		elseif find(msg, "texttospeech") then
-			gmanstfu = false
 			return
 		end
 
@@ -370,12 +360,18 @@ function NIRC.GmanProcess(nick, origmsg, channel)
 			local startnum = find(msg, "mail") + 5
 			local endnum = find(msg, " ", startnum)
 			local tarname = string.sub(msg, startnum, endnum-1)
-			print("NICK["..nick.."]{"..string.sub(nick,6).."}")
-			nick = string.sub(nick,6)
 			table.insert(NIRC.Emails, {tarname, "Email "..os.date("%a %d %I:%M%p ")..nick.." -> "..tarname..": "..string.sub(origmsg,endnum + 1)})
-			NIRC.Send("Gman", "PRIVMSG ".. nick .. " :Okay I'll send that email to "..tarname.."!")
+			NIRC.Say("Gman", "Okay I'll send that email to "..tarname.."!", NULL, nick)
 			print("NIRC: "..nick.." sent an email to "..tarname..".")
 			file.Write("nebcorp/nirc_emails.txt",util.TableToJSON(NIRC.Emails))
+			return
+		end
+		if find(msg, "players") then 
+			local names = {}
+			for k,v in pairs(player.GetAll()) do
+				table.insert(names, v:Nick())
+			end
+			Say("Uhh, there's " .. table.concat(names, ', ') .. ", and myself of course.")
 			return
 		end
 		if find(msg, "echo") then Say(string.sub(msg, find(msg, "echo") + 5, string.len(msg))) return end
@@ -420,19 +416,28 @@ function NIRC.GmanProcess(nick, origmsg, channel)
 					local note = NIRC.Notes[tab[k+1]]
 					if !note[1] then return Say("(Note):"..note[2])
 					elseif string.Left(nick,5) == "[IRC]" then
-						return NIRC.Send("Gman", "PRIVMSG "..string.sub(nick,6).." :(Private Note):"..note[2])
+						return NIRC.Say("Gman", "(Note):"..note[2], NULL, string.sub(nick,6))
 					else
-						return NIRC.Send("Gman", "PRIVMSG "..nick.." :(Private Note):"..note[2])
+						return NIRC.Say("Gman", "(Note):"..note[2], NULL, nick)
 					end
 				end
 			end
 			return Say("I don't have a note by that name")
 		end
-		if find(msg, "flip") && find(msg, "coin") then RandSay({"I flipped the coin, it is heads up.","I may have flipped a coin, it is tails up."}) return end
+		if find(msg, "flip") && find(msg, "coin") then
+			RandSay({
+				"I flipped the coin, it is heads up.",
+				"I rolled a 2d and got a 1 (heads)",
+				"Coins are outmoded. You want odds? I'll give you odds. Its tails.",
+				"I may have flipped a coin, it is tails up."
+			})
+			return
+		end
 		if find(msg, "question") && math.random(1,2) == 1 then
 			return Say("The answer is install "..table.Random({"fedora","debian","xubuntu","kubuntu","xfce","arch","gentoo","red hat","mint", "grub again"})..", now what was the question?") end
-		if (find(msg, "minecraft") || find(msg, "gcraft") || find(msg, "diamond")) then NIRC.Send("Gman", "NICK [GM]Herobrine") return end
-		if find(msg, "map") then return NIRC.ChangeMap(msg) or Say("The current map is "..game.GetMap()..".") end
+		if find(msg, "map") then
+			return NIRC.ChangeMap(msg, find(msg, "next")) or Say("The current map is "..game.GetMap()..".")
+		end
 		if find(msg, "bonk") || (string.len(msg) < 7 && find(msg, "gman?")) then RandSay(NIRC.Messages.Bonk) return end
 		if find(msg, "match box") then Say("No, but a tin can.") return end
 		if find(msg, "pants") then Say("Why wear 'em?") return end
@@ -445,14 +450,13 @@ function NIRC.GmanProcess(nick, origmsg, channel)
 		local ipaddr = string.match(msg, "%d+.%d+.%d+.%d+")
 		if ipaddr and LookupIPAddress(ipaddr) then Say("My records report: "..LookupIPAddress(ipaddr)) return end
 		if find(msg, "crash") && math.random(1, 4) == 1 then 
-			Say("Okay fine maybe I will just crash the server.") 
-			for k,v in pairs(NIRC.socks) do NIRC.Disconnect(k) end 
+			Say("Okay fine maybe I will just crash the server.")
+			NIRC.Shutdown()
 			timer.Create("RestoreNIRC",24,1,function() RunConsoleCommand("nirc_refresh") end)
 			return
 		end
 		if find(msg, "whatport80") then game.ConsoleCommand("wire_expression2_reload\n") return end
 		if find(msg, "sv_lag") and string.find(nick,"Neb") then game.ConsoleCommand("sv_lag 0\n") Say("Okay setting sv_lag to 0! Let me know when you want it back on") return end
-		if (find(msg, "childhood") || find(msg, "normality")) then NIRC.Send("Gman", "NICK [GM]Gman") return end
 		if find(msg, "fungus") then Say("REMOVING FUNGUS, SIR/MA'AM!") for k,v in pairs(ents.FindByModel("models/weapons/w_bugbait.mdl")) do v:Remove() end return end
 		if find(msg, "fastdl") then 
 			NIRC.nofastdl = !NIRC.nofastdl
@@ -505,6 +509,7 @@ function NIRC.GmanProcess(nick, origmsg, channel)
 		if find(msg, "lookup") then return NIRC.Lookup(nick,msg,Say) end
 		if find(msg, "irc") then Say(NIRC.Messages.IRC) return end
 		if find(msg, "slack") then Say("Nebtown chills in Slack (hipster IRC/chat) when not ingame. Join us at http://slack.nebtown.info/") return end
+		if find(msg, "discord") then Say("Nebtown has a Discord - join us at https://discord.gg/N63AqgZ") return end
 		if find(msg, "what is love") then Say("Baby don't hurt me") return end
 		if find(msg, "hurt me") then Say("Don't hurt me; no more") return end
 		if find(msg, "rank") and NADMOD then 
@@ -528,9 +533,9 @@ function NIRC.GmanProcess(nick, origmsg, channel)
 		end
 		if find(msg, "how") then RandSay(NIRC.Messages.How) return end
 		if find(msg, "nuke") then
-			NIRC.Send("Gman", "NICK [GM]Gnukem") 
+			--NIRC.Send("Gman", "NICK [GM]Gnukem")
 			RandSay(NIRC.Messages.DukeNukem)
-			timer.Simple(600, function() NIRC.Send("Gman", "NICK [GM]Gman") end)
+			--timer.Simple(600, function() NIRC.Send("Gman", "NICK [GM]Gman") end)
 			return
 		end
 		if find(msg, "you") then RandSay(NIRC.Messages.You) if math.random(1,60) == 1 then timer.Simple(2, function() Say("WAIT NO I TAKE IT BACK") end) end return end
@@ -565,7 +570,7 @@ function NIRC.Lookup(nick, msg, Say)
 			if !address then return Say("I dunno him.") end
 			Say("My records report "..tarname.." has been commonly known by the following names: "..LookupIPAddress(address))
 		else
-			NIRC.Send("Gman", "WHOIS "..fullname)
+			-- NIRC.Send("Gman", "WHOIS "..fullname)
 			timer.Simple(2,function()
 				if NIRC.UserIPs[fullname] then 
 					local address = NIRC.UserIPs[fullname]
@@ -578,16 +583,47 @@ function NIRC.Lookup(nick, msg, Say)
 	end
 	return
 end
-function NIRC.ChangeMap(msg)
+function NIRC.ChangeMap(msg, queue)
 	if !NADMOD then return print("Nadmod is not present, no maps list available!") end
-	if #player.GetHumans() < 2 then
-		local gm,rp,sb = find(msg, "gm_"), find(msg, "rp_"), find(msg, "sb_")
-		for _,v in pairs(file.Find("maps/*.bsp","GAME")) do v = string.sub(v,1,-5) if !NADMOD.MapsList[v] then NADMOD.MapsList[v] = 0 end end
-		if gm then for k,v in pairs(NADMOD.MapsList) do if string.find(k,string.sub(msg,gm,(string.find(msg,"[^%w_]",gm) or 0)-1)) then game.ConsoleCommand("! map "..k.."\n") return true end end end
-		if rp then for k,v in pairs(NADMOD.MapsList) do if string.find(k,string.sub(msg,rp,(string.find(msg,"[^%w_]",rp) or 0)-1)) then game.ConsoleCommand("! map "..k.."\n") return true end end end
-		if sb then for k,v in pairs(NADMOD.MapsList) do if string.find(k,string.sub(msg,sb,(string.find(msg,"[^%w_]",sb) or 0)-1)) then game.ConsoleCommand("! map "..k.."\n") return true end end end
+	if #player.GetHumans() >= 2 then
+		queue = true
+	end
+
+	local map = NIRC.FindMap(msg)
+	if not map then return false end
+
+	if queue then
+		file.Write("nextmap.txt", map)
+		NIRC.Say("Queued up next map: " .. map)
+	else
+		game.ConsoleCommand("! map "..map.."\n")
+	end
+	return true
+end
+
+function NIRC.FindMap(msg)
+	local gm,rp,sb = find(msg, "gm_"), find(msg, "rp_"), find(msg, "sb_")
+	for _,v in pairs(file.Find("maps/*.bsp","GAME")) do
+		v = string.sub(v,1,-5)
+		if !NADMOD.MapsList[v] then NADMOD.MapsList[v] = 0 end
+	end
+	if gm then
+		for k,v in pairs(NADMOD.MapsList) do
+			if string.find(k,string.sub(msg,gm,(string.find(msg,"[^%w_]",gm) or 0)-1)) then return k end
+		end
+	end
+	if rp then
+		for k, v in pairs(NADMOD.MapsList) do
+			if string.find(k, string.sub(msg, rp, (string.find(msg, "[^%w_]", rp) or 0)-1)) then return k end
+		end
+	end
+	if sb then
+		for k, v in pairs(NADMOD.MapsList) do
+			if string.find(k, string.sub(msg, sb, (string.find(msg, "[^%w_]",sb) or 0)-1)) then return k end
+		end
 	end
 end
+
 function NIRC.Roll(nick, msg, Say)
 	RandSay = NIRC.RandSay
 	-- Don't roll
@@ -598,7 +634,7 @@ function NIRC.Roll(nick, msg, Say)
 		Say("I roll a 7.")
 	-- Do a barrel roll
 	elseif find(msg, "barrel roll") then
-		NIRC.Send("Gman", "NICK [GM]StarFox") 
+		-- NIRC.Send("Gman", "NICK [GM]StarFox")
 		RandSay({"Theres something wrong with the G-Defuser!", "Everybody stay alert", "Good luck."})
 	-- Trolling
 	elseif find(msg, "troll") then

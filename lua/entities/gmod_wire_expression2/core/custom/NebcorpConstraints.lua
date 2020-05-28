@@ -392,8 +392,7 @@ registerFunction("getWelds", "e:", "r", function(self, args)
     	local op1 = args[2]
     	local rv1 = op1[1](self, op1)
 	local ent = IsValid(rv1) and rv1
-	 if(!ent) then return {} end
-   	if(constraint.HasConstraints(rv1))then
+   	if(IsValid(ent) && constraint.HasConstraints(rv1))then
 		local con = constraint.FindConstraints( rv1, "Weld" )
 		local array = {}
 		local count = 0
@@ -407,6 +406,7 @@ registerFunction("getWelds", "e:", "r", function(self, args)
 		end
 	return array
 	end
+	return {}
 end)
 
 local function FindWeldsOnce( Ent, RetTable )

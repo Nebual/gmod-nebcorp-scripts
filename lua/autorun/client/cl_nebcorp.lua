@@ -181,3 +181,19 @@ net.Receive("NALS", function(netlen)
 		LocalPlayer():SetCollisionGroup(COLLISION_GROUP_PLAYER)
 	end
 end)
+
+local font = {
+	name = "Verdana",
+	size = 18,
+	weight = 700,
+	dropshadow = 1
+}
+surface.CreateFont("ChatFont", font)
+surface.CreateFont("TargetID", font)
+surface.CreateFont("TargetIDSmall", font)
+surface.CreateFont("HL2MPTypeDeath", font)
+
+
+CreateConVar( "test_client_var", "3", FCVAR_REPLICATED )
+
+CreateConVar( "test_shared_var", "4", FCVAR_REPLICATED )

@@ -8,8 +8,12 @@ e2function number angdiff(ang1, ang2)
 	return math.AngleDifference(ang1, ang2)
 end
 
+
+e2function string ircLastSaid() return E2IRCLastSaid or "" end
+e2function string ircLastSpoke() return E2IRCLastSpoke or "" end
+
 e2function void gmanSay(string name, string msg)
-	NIRC.Send("Gman", "PRIVMSG "..NIRC.channel.." :".."("..name..") "..msg)
+	NChat.Say("Gman", "("..name..") "..msg)
 end
 
 e2function void entity:setBuoyancy(percent)
